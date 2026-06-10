@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gym Tracker" />
+  <title>Gym Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0e0e0e;
+      --surface:   #161616;
+      --surface2:  #1f1f1f;
+      --border:    #2a2a2a;
+      --accent:    #4f8ef7;
+      --accent-dim:#1a2f52;
+      --danger:    #e05555;
+      --text:      #f0f0f0;
+      --sub:       #666;
+      --sub2:      #444;
+      --radius:    14px;
+      --nav-h:     64px;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* ── Layout ── */
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+    #inhalt { flex: 1; padding: 28px 20px calc(var(--nav-h) + 28px); max-width: 520px; margin: 0 auto; width: 100%; }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: rgba(14,14,14,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-around;
+      padding: 0 4px;
+      z-index: 100;
+    }
+    nav button {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: none; border: none; cursor: pointer;
+      color: var(--sub); font-size: 10px; font-weight: 500;
+      padding: 8px 10px; border-radius: 10px;
+      transition: color .15s;
+      font-family: inherit; letter-spacing: 0.3px;
+    }
+    nav button::before {
+      content: attr(data-icon); font-size: 20px; line-height: 1;
+    }
+    nav button:hover, nav button.active { color: var(--accent); }
+
+    /* ── Page title ── */
+    .page-title {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+      margin-bottom: 24px; color: var(--text);
+    }
+    .page-sub {
+      font-size: 13px; color: var(--sub); margin-top: -18px; margin-bottom: 24px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px; margin-bottom: 12px;
+    }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+
+    /* ── Inputs ── */
+    input[type="text"], input[type="number"] {
+      width: 100%; padding: 12px 14px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 14px;
+      font-family: inherit; outline: none; transition: border .15s;
+      margin-bottom: 10px;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--accent);
+    }
+    input[type="text"]::placeholder, input[type="number"]::placeholder { color: var(--sub); }
+
+    /* ── Buttons ── */
+    .btn {
+      border: none; cursor: pointer; font-family: inherit;
+      font-weight: 600; border-radius: 10px; transition: all .15s;
+      font-size: 14px; padding: 11px 18px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; padding: 13px; font-size: 15px; border-radius: 12px; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid #3a2020; font-size: 12px; padding: 6px 12px; }
+    .btn-danger:hover { background: #2a1515; }
+    .btn-sm { font-size: 12px; padding: 7px 14px; }
+
+    /* ── Tag & Übung Rows ── */
+    .tag-row, .übung-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px;
+    }
+    .tag-row-name, .übung-row-name {
+      font-size: 15px; font-weight: 500;
+    }
+    .tag-row-actions, .übung-row-actions { display: flex; gap: 8px; align-items: center; }
+    .übung-row-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+    /* ── Training ── */
+    .übung-block {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;
+    }
+    .übung-block h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--accent); }
+    .satz-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .satz-row label { font-size: 12px; color: var(--sub); width: 52px; flex-shrink: 0; }
+    .satz-row input { margin-bottom: 0; flex: 1; padding: 10px 12px; font-size: 14px; }
+
+    /* ── Timer ── */
+    #timer-anzeige {
+      font-size: 72px; font-weight: 700; letter-spacing: -3px;
+      text-align: center; color: var(--text); margin: 28px 0 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    #timer-signal {
+      text-align: center; font-size: 18px; font-weight: 600;
+      color: var(--accent); min-height: 28px; margin-bottom: 20px;
+    }
+    .timer-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+    .timer-controls input { margin-bottom: 0; }
+    .toggle-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 10px;
+    }
+    .toggle-row label { font-size: 14px; color: var(--sub); cursor: pointer; }
+    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+    /* ── Historie ── */
+    .session-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;
+    }
+    .session-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .session-datum { font-size: 13px; color: var(--sub); }
+    .session-tag { font-size: 15px; font-weight: 600; }
+    .session-übung { margin-bottom: 8px; }
+    .session-übung-name { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .session-satz { font-size: 12px; color: var(--sub); padding: 3px 0; }
+
+    /* ── Rekorde ── */
+    .rekord-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px;
+    }
+    .rekord-name { font-size: 14px; font-weight: 500; }
+    .rekord-kg { font-size: 18px; font-weight: 700; color: var(--accent); }
+
+    /* ── Körpergewicht ── */
+    .kg-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+    }
+    .kg-row:last-child { border-bottom: none; }
+    .kg-datum { font-size: 13px; color: var(--sub); }
+    .kg-wert { font-size: 16px; font-weight: 600; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center; padding: 48px 20px;
+      color: var(--sub); font-size: 14px; line-height: 1.7;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 10px 20px; border-radius: 30px;
+      font-size: 13px; font-weight: 500; z-index: 999;
+      animation: toastIn .2s ease; white-space: nowrap;
+    }
+    @keyframes toastIn { from { opacity:0; bottom: calc(var(--nav-h) + 4px); } to { opacity:1; } }
+
+    /* ── Gear Button ── */
+    #btn-einstellungen {
+      position: fixed; top: 16px; right: 16px;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--sub); font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; transition: all .15s;
+    }
+    #btn-einstellungen:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Settings Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 300; display: flex; align-items: flex-end;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px 20px 0 0; padding: 28px 24px 48px;
+      width: 100%; max-width: 520px; margin: 0 auto;
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(60px); opacity:0 } to { transform: translateY(0); opacity:1 } }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+    .modal-close {
+      float: right; background: none; border: none; color: var(--sub);
+      font-size: 22px; cursor: pointer; margin-top: -4px;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+<button id="btn-einstellungen">⚙️</button>
+<div id="app">
+  <nav>
+    <button id="btn-plan"          data-icon="📋">Plan</button>
+    <button id="btn-heute"         data-icon="💪">Training</button>
+    <button id="btn-timer"         data-icon="⏱">Timer</button>
+    <button id="btn-historie"      data-icon="📖">Historie</button>
+    <button id="btn-rekorde"       data-icon="🏆">Rekorde</button>
+    <button id="btn-körpergewicht" data-icon="⚖️">Gewicht</button>
+  </nav>
+  <main id="inhalt">
+    <div class="empty">
+      <div class="empty-icon">💪</div>
+      <p>Wähle einen Bereich<br>um zu beginnen.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ─── Daten laden & speichern ────────────────────────────────
+  let planJSON = localStorage.getItem("plan")
+  let plan = planJSON ? JSON.parse(planJSON) : {}
+
+  let sessionenJSON = localStorage.getItem("sessionen")
+  let sessionen = sessionenJSON ? JSON.parse(sessionenJSON) : []
+
+  let körpergewichtJSON = localStorage.getItem("körpergewicht")
+  let körpergewicht = körpergewichtJSON ? JSON.parse(körpergewichtJSON) : []
+
+  function planSpeichern() { localStorage.setItem("plan", JSON.stringify(plan)) }
+  function sessionenSpeichern() { localStorage.setItem("sessionen", JSON.stringify(sessionen)) }
+  function körpergewichtSpeichern() { localStorage.setItem("körpergewicht", JSON.stringify(körpergewicht)) }
+
+  // ─── Toast ──────────────────────────────────────────────────
+  let toastTimer
+  function flash(msg) {
+    document.querySelector('.toast')?.remove()
+    clearTimeout(toastTimer)
+    const el = document.createElement('div')
+    el.className = 'toast'
+    el.textContent = msg
+    document.body.appendChild(el)
+    toastTimer = setTimeout(() => el.remove(), 2000)
+  }
+
+  // ─── Active nav ─────────────────────────────────────────────
+  function setActiveNav(id) {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'))
+    document.getElementById(id).classList.add('active')
+  }
+
+  // ─── Plan Funktionen ────────────────────────────────────────
+  function tageLaden() {
+    const liste = document.getElementById("tage-liste")
+    if (!liste) return
+    liste.innerHTML = ""
+    if (Object.keys(plan).length === 0) {
+      liste.innerHTML = `<div class="empty"><p>Noch keine Trainingstage.<br>Füge deinen ersten Tag hinzu.</p></div>`
+      return
+    }
+    Object.keys(plan).forEach(function(tagName) {
+      liste.innerHTML += `
+        <div class="tag-row">
+          <div>
+            <div class="tag-row-name">${tagName}</div>
+            <div class="übung-row-sub">${plan[tagName].length} Übungen</div>
+          </div>
+          <div class="tag-row-actions">
+            <button class="btn btn-ghost btn-sm" onclick="tagÖffnen('${tagName}')">Öffnen</button>
+            <button class="btn btn-danger btn-sm" onclick="tagLöschen('${tagName}')">✕</button>
+          </div>
+        </div>`
+    })
+  }
+
+  function tagÖffnen(tagName) {
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">${tagName}</p>
+      <div class="card">
+        <div class="card-title">Übung hinzufügen</div>
+        <input type="text" id="input-übung" placeholder="Übungsname">
+        <input type="number" id="input-sätze" placeholder="Anzahl Sätze">
+        <button class="btn btn-primary" id="btn-übung-hinzufügen">Hinzufügen</button>
+      </div>
+      <div class="divider"></div>
+      <div id="übungen-liste"></div>
+    `
+    übungenLaden(tagName)
+    document.getElementById("btn-übung-hinzufügen").addEventListener("click", function() {
+      const übungName = document.getElementById("input-übung").value
+      const satzAnzahl = document.getElementById("input-sätze").value
+      if (übungName.trim() !== "" && satzAnzahl !== "") {
+        plan[tagName].push({ name: übungName.trim(), sätze: satzAnzahl })
+        planSpeichern()
+        übungenLaden(tagName)
+        document.getElementById("input-übung").value = ""
+        document.getElementById("input-sätze").value = ""
+        flash("Übung hinzugefügt")
+      }
+    })
+  }
+
+  function übungenLaden(tagName) {
+    const liste = document.getElementById("übungen-liste")
+    if (!liste) return
+    liste.innerHTML = ""
+    if (plan[tagName].length === 0) {
+      liste.innerHTML = `<div class="empty"><p>Noch keine Übungen.</p></div>`
+      return
+    }
+    plan[tagName].forEach(function(übung, index) {
+      liste.innerHTML += `
+        <div class="übung-row">
+          <div>
+            <div class="übung-row-name">${übung.name}</div>
+            <div class="übung-row-sub">${übung.sätze} Sätze</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="übungLöschen('${tagName}', ${index})">✕</button>
+        </div>`
+    })
+  }
+
+  function übungLöschen(tagName, index) {
+    plan[tagName].splice(index, 1)
+    planSpeichern()
+    übungenLaden(tagName)
+    flash("Übung gelöscht")
+  }
+
+  function tagLöschen(tagName) {
+    delete plan[tagName]
+    planSpeichern()
+    tageLaden()
+    flash("Tag gelöscht")
+  }
+
+  // ─── Training ───────────────────────────────────────────────
+  function trainingStarten(tagName) {
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">${tagName}</p>
+      <div id="übungen-training"></div>
+      <button class="btn btn-primary" id="btn-training-speichern">Training speichern</button>
+    `
+    plan[tagName].forEach(function(übung, index) {
+      let sätzeHTML = ""
+      for (let i = 1; i <= übung.sätze; i++) {
+        sätzeHTML += `
+          <div class="satz-row">
+            <label>Satz ${i}</label>
+            <input type="number" placeholder="Wdh" id="wdh-${index}-${i}">
+            <input type="number" placeholder="kg"  id="kg-${index}-${i}">
+          </div>`
+      }
+      document.getElementById("übungen-training").innerHTML += `
+        <div class="übung-block">
+          <h3>${übung.name}</h3>
+          ${sätzeHTML}
+        </div>`
+    })
+
+    document.getElementById("btn-training-speichern").addEventListener("click", function() {
+      const session = {
+        datum: new Date().toLocaleDateString("de"),
+        tag: tagName,
+        übungen: []
+      }
+      plan[tagName].forEach(function(übung, index) {
+        const sätzeErgebnisse = []
+        for (let i = 1; i <= übung.sätze; i++) {
+          sätzeErgebnisse.push({
+            wdh: document.getElementById(`wdh-${index}-${i}`).value,
+            kg:  document.getElementById(`kg-${index}-${i}`).value
+          })
+        }
+        session.übungen.push({ name: übung.name, sätze: sätzeErgebnisse })
+      })
+      sessionen.push(session)
+      sessionenSpeichern()
+      flash("Training gespeichert ✓")
+      btnHeute.click()
+    })
+  }
+
+  // ─── Session löschen ────────────────────────────────────────
+  function sessionLöschen(index) {
+    sessionen.splice(index, 1)
+    sessionenSpeichern()
+    flash("Session gelöscht")
+    btnHistorie.click()
+  }
+
+  // ─── Körpergewicht ──────────────────────────────────────────
+  function kgDiagramm() {
+    const canvas = document.getElementById("kg-chart")
+    if (!canvas || körpergewicht.length < 2) {
+      if (canvas) canvas.style.display = "none"
+      return
+    }
+    canvas.style.display = "block"
+    const ctx = canvas.getContext("2d")
+    const W = canvas.width  = canvas.offsetWidth
+    const H = canvas.height = 180
+    ctx.clearRect(0, 0, W, H)
+
+    const werte = körpergewicht.map(e => parseFloat(e.kg))
+    const min = Math.min(...werte) - 2
+    const max = Math.max(...werte) + 2
+    const pad = { top: 16, right: 16, bottom: 32, left: 40 }
+    const w = W - pad.left - pad.right
+    const h = H - pad.top  - pad.bottom
+
+    const toX = i => pad.left + (i / (werte.length - 1)) * w
+    const toY = v => pad.top + h - ((v - min) / (max - min)) * h
+
+    ctx.strokeStyle = "#2a2a2a"
+    ctx.lineWidth = 1
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (h / 4) * i
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke()
+      const val = max - ((max - min) / 4) * i
+      ctx.fillStyle = "#555"
+      ctx.font = "11px Inter, sans-serif"
+      ctx.textAlign = "right"
+      ctx.fillText(val.toFixed(1), pad.left - 6, y + 4)
+    }
+
+    ctx.fillStyle = "#555"
+    ctx.font = "10px Inter, sans-serif"
+    ctx.textAlign = "center"
+    ctx.fillText(körpergewicht[0].datum, toX(0), H - 6)
+    ctx.fillText(körpergewicht[körpergewicht.length-1].datum, toX(werte.length-1), H - 6)
+
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + h)
+    grad.addColorStop(0, "rgba(79,142,247,0.25)")
+    grad.addColorStop(1, "rgba(79,142,247,0)")
+    ctx.beginPath()
+    ctx.moveTo(toX(0), toY(werte[0]))
+    werte.forEach((v, i) => { if (i > 0) ctx.lineTo(toX(i), toY(v)) })
+    ctx.lineTo(toX(werte.length-1), pad.top + h)
+    ctx.lineTo(toX(0), pad.top + h)
+    ctx.closePath()
+    ctx.fillStyle = grad
+    ctx.fill()
+
+    ctx.beginPath()
+    ctx.strokeStyle = "#4f8ef7"
+    ctx.lineWidth = 2
+    ctx.lineJoin = "round"
+    werte.forEach((v, i) => { i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)) })
+    ctx.stroke()
+
+    werte.forEach((v, i) => {
+      ctx.beginPath()
+      ctx.arc(toX(i), toY(v), 4, 0, Math.PI * 2)
+      ctx.fillStyle = "#4f8ef7"
+      ctx.fill()
+      ctx.strokeStyle = "#0e0e0e"
+      ctx.lineWidth = 2
+      ctx.stroke()
+    })
+  }
+
+  function kgLaden() {
+    const liste = document.getElementById("kg-liste")
+    if (!liste) return
+    liste.innerHTML = ""
+    if (körpergewicht.length === 0) {
+      liste.innerHTML = `<div class="empty"><p>Noch keine Einträge.</p></div>`
+      return
+    }
+    const reversed = [...körpergewicht].reverse()
+    reversed.forEach(function(eintrag) {
+      liste.innerHTML += `
+        <div class="kg-row">
+          <span class="kg-datum">${eintrag.datum}</span>
+          <span class="kg-wert">${eintrag.kg} kg</span>
+        </div>`
+    })
+    setTimeout(kgDiagramm, 0)
+  }
+
+  // ─── Navigation ─────────────────────────────────────────────
+  const btnPlan          = document.getElementById("btn-plan")
+  const btnHeute         = document.getElementById("btn-heute")
+  const btnTimer         = document.getElementById("btn-timer")
+  const btnHistorie      = document.getElementById("btn-historie")
+  const btnRekorde       = document.getElementById("btn-rekorde")
+  const btnKörpergewicht = document.getElementById("btn-körpergewicht")
+
+  btnPlan.addEventListener("click", function() {
+    setActiveNav("btn-plan")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Trainingsplan</p>
+      <div class="card">
+        <div class="card-title">Neuer Tag</div>
+        <input type="text" id="input-tag" placeholder="z.B. Push, Pull, Legs">
+        <button class="btn btn-primary" id="btn-tag-hinzufügen">Tag erstellen</button>
+      </div>
+      <div class="divider"></div>
+      <div id="tage-liste"></div>
+    `
+    tageLaden()
+    document.getElementById("btn-tag-hinzufügen").addEventListener("click", function() {
+      const tagName = document.getElementById("input-tag").value.trim()
+      if (tagName !== "") {
+        plan[tagName] = []
+        planSpeichern()
+        tageLaden()
+        document.getElementById("input-tag").value = ""
+        flash("Tag erstellt")
+      }
+    })
+  })
+
+  btnHeute.addEventListener("click", function() {
+    setActiveNav("btn-heute")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Training</p>
+      <p class="page-sub">Wähle deinen heutigen Tag</p>
+      <div id="tage-liste"></div>
+    `
+    const liste = document.getElementById("tage-liste")
+    if (Object.keys(plan).length === 0) {
+      liste.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><p>Lege zuerst einen Trainingsplan an.</p></div>`
+      return
+    }
+    Object.keys(plan).forEach(function(tagName) {
+      liste.innerHTML += `
+        <div class="tag-row" style="cursor:pointer" onclick="trainingStarten('${tagName}')">
+          <div>
+            <div class="tag-row-name">${tagName}</div>
+            <div class="übung-row-sub">${plan[tagName].length} Übungen</div>
+          </div>
+          <span style="color:var(--sub);font-size:20px">›</span>
+        </div>`
+    })
+  })
+
+  btnTimer.addEventListener("click", function() {
+    setActiveNav("btn-timer")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Pausentimer</p>
+      <div id="timer-signal"></div>
+      <div id="timer-anzeige">00:00</div>
+      <div class="timer-controls">
+        <input type="number" id="input-min" placeholder="Min" min="0" style="margin-bottom:0">
+        <input type="number" id="input-sek" placeholder="Sek" min="0" max="59" style="margin-bottom:0">
+        <button class="btn btn-primary" id="btn-timer-start" style="width:auto;padding:12px 22px">Start</button>
+      </div>
+      <div class="toggle-row">
+        <input type="checkbox" id="toggle-ton">
+        <label for="toggle-ton">Ton bei Ende</label>
+      </div>
+    `
+    let sekunden = 0
+    let interval = null
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60)
+      const sec = s % 60
+      return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    }
+
+    document.getElementById("btn-timer-start").addEventListener("click", function() {
+      const min = parseInt(document.getElementById("input-min").value) || 0
+      const sek = parseInt(document.getElementById("input-sek").value) || 0
+      sekunden = min * 60 + sek
+      if (sekunden > 0) {
+        document.getElementById("timer-signal").textContent = ""
+        document.getElementById("timer-anzeige").textContent = formatTime(sekunden)
+        clearInterval(interval)
+        interval = setInterval(function() {
+          sekunden--
+          document.getElementById("timer-anzeige").textContent = formatTime(sekunden)
+          if (sekunden <= 0) {
+            clearInterval(interval)
+            document.getElementById("timer-signal").textContent = "Nächster Satz!"
+            if (document.getElementById("toggle-ton").checked) {
+              const audioCtx = new AudioContext()
+              const osc = audioCtx.createOscillator()
+              osc.connect(audioCtx.destination)
+              osc.start()
+              osc.stop(audioCtx.currentTime + 0.3)
+            }
+          }
+        }, 1000)
+      }
+    })
+  })
+
+  btnHistorie.addEventListener("click", function() {
+    setActiveNav("btn-historie")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Historie</p>
+      <div id="historie-liste"></div>
+    `
+    const liste = document.getElementById("historie-liste")
+    if (sessionen.length === 0) {
+      liste.innerHTML = `<div class="empty"><div class="empty-icon">📖</div><p>Noch keine Sessions gespeichert.</p></div>`
+      return
+    }
+    const reversed = [...sessionen].reverse().map((s, i) => ({ session: s, origIndex: sessionen.length - 1 - i }))
+    reversed.forEach(function({ session, origIndex }) {
+      let übungenHTML = ""
+      session.übungen.forEach(function(übung) {
+        let sätzeHTML = ""
+        übung.sätze.forEach(function(satz, i) {
+          sätzeHTML += `<div class="session-satz">Satz ${i+1}: ${satz.wdh} Wdh · ${satz.kg} kg</div>`
+        })
+        übungenHTML += `
+          <div class="session-übung">
+            <div class="session-übung-name">${übung.name}</div>
+            ${sätzeHTML}
+          </div>`
+      })
+      liste.innerHTML += `
+        <div class="session-block">
+          <div class="session-header">
+            <div>
+              <div class="session-tag">${session.tag}</div>
+              <div class="session-datum">${session.datum}</div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="sessionLöschen(${origIndex})">✕</button>
+          </div>
+          ${übungenHTML}
+        </div>`
+    })
+  })
+
+  btnRekorde.addEventListener("click", function() {
+    setActiveNav("btn-rekorde")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Rekorde</p>
+      <div id="rekorde-liste"></div>
+    `
+    const liste = document.getElementById("rekorde-liste")
+    const rekorde = {}
+    sessionen.forEach(function(session) {
+      session.übungen.forEach(function(übung) {
+        übung.sätze.forEach(function(satz) {
+          const kg = parseFloat(satz.kg)
+          if (!isNaN(kg) && (!rekorde[übung.name] || kg > rekorde[übung.name])) {
+            rekorde[übung.name] = kg
+          }
+        })
+      })
+    })
+    if (Object.keys(rekorde).length === 0) {
+      liste.innerHTML = `<div class="empty"><div class="empty-icon">🏆</div><p>Noch keine Rekorde.<br>Logge dein erstes Training.</p></div>`
+      return
+    }
+    Object.keys(rekorde).forEach(function(name) {
+      liste.innerHTML += `
+        <div class="rekord-row">
+          <span class="rekord-name">${name}</span>
+          <span class="rekord-kg">${rekorde[name]} kg</span>
+        </div>`
+    })
+  })
+
+  btnKörpergewicht.addEventListener("click", function() {
+    setActiveNav("btn-körpergewicht")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Körpergewicht</p>
+      <div class="card">
+        <div class="card-title">Eintragen</div>
+        <input type="number" id="input-kg" placeholder="kg">
+        <button class="btn btn-primary" id="btn-kg-eintragen">Speichern</button>
+      </div>
+      <div class="card" style="padding:16px 18px">
+        <canvas id="kg-chart" style="width:100%;display:none"></canvas>
+      </div>
+      <div class="divider"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="kg-liste"></div>
+      </div>
+    `
+    kgLaden()
+    document.getElementById("btn-kg-eintragen").addEventListener("click", function() {
+      const kgWert = document.getElementById("input-kg").value
+      if (kgWert !== "") {
+        körpergewicht.push({ datum: new Date().toLocaleDateString("de"), kg: kgWert })
+        körpergewichtSpeichern()
+        kgLaden()
+        document.getElementById("input-kg").value = ""
+        flash("Gewicht gespeichert")
+      }
+    })
+  })
+
+  // ─── Einstellungen ──────────────────────────────────────────
+  document.getElementById("btn-einstellungen").addEventListener("click", function() {
+    const overlay = document.createElement("div")
+    overlay.className = "modal-overlay"
+    overlay.id = "settings-modal"
+    overlay.innerHTML = `
+      <div class="modal">
+        <button class="modal-close" id="modal-close">✕</button>
+        <p class="modal-title">Einstellungen</p>
+
+        <p style="font-size:13px;color:var(--sub);margin-bottom:16px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase">Daten sichern</p>
+
+        <button class="btn btn-ghost" id="btn-export" style="width:100%;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+          <span>Daten exportieren</span><span style="font-size:12px;opacity:0.5">.json ↓</span>
+        </button>
+        <label class="btn btn-ghost" style="width:100%;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+          <span>Daten importieren</span><span style="font-size:12px;opacity:0.5">.json ↑</span>
+          <input type="file" accept=".json" id="file-import" style="display:none">
+        </label>
+
+        <p style="font-size:12px;color:var(--sub);line-height:1.7">
+          Export speichert Plan, Training, Rekorde und Körpergewicht als .json Datei.<br>
+          Beim Import werden bestehende Daten überschrieben.
+        </p>
+      </div>
+    `
+    document.body.appendChild(overlay)
+
+    document.getElementById("modal-close").addEventListener("click", () => overlay.remove())
+    overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove() })
+
+    document.getElementById("btn-export").addEventListener("click", function() {
+      const data = JSON.stringify({
+        version: 1,
+        plan,
+        sessionen,
+        körpergewicht
+      }, null, 2)
+      const blob = new Blob([data], { type: "application/json" })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement("a")
+      a.href = url
+      a.download = `gymtracker_${new Date().toLocaleDateString("de").replace(/\./g, "-")}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      flash("Exportiert ✓")
+      overlay.remove()
+    })
+
+    document.getElementById("file-import").addEventListener("change", function(e) {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result)
+          if (parsed.plan)          { Object.assign(plan, parsed.plan); planSpeichern() }
+          if (parsed.sessionen)     { sessionen.length = 0; sessionen.push(...parsed.sessionen); sessionenSpeichern() }
+          if (parsed.körpergewicht) { körpergewicht.length = 0; körpergewicht.push(...parsed.körpergewicht); körpergewichtSpeichern() }
+          flash("Import erfolgreich ✓")
+          overlay.remove()
+        } catch { flash("Fehler beim Importieren") }
+      }
+      reader.readAsText(file)
+    })
+  })
+</script>
+</body>
+</html>
