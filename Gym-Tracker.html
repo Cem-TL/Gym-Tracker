@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gym Tracker" />
+  <title>Gym Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:          #0a0a0a;
+      --surface:     #111111;
+      --surface2:    #191919;
+      --surface3:    #222222;
+      --border:      #252525;
+      --border-soft: #1e1e1e;
+      --accent:      #4f8ef7;
+      --accent-dim:  rgba(79,142,247,0.12);
+      --accent-glow: rgba(79,142,247,0.25);
+      --danger:      #e05555;
+      --text:        #f0f0f0;
+      --sub:         #5a5a5a;
+      --sub2:        #333;
+      --radius:      16px;
+      --radius-sm:   10px;
+      --nav-h:       64px;
+      --glass-bg:    rgba(255,255,255,0.03);
+      --glass-border:rgba(255,255,255,0.07);
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* ── Layout ── */
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+    #inhalt {
+      flex: 1; padding: 28px 20px calc(var(--nav-h) + 28px);
+      max-width: 520px; margin: 0 auto; width: 100%;
+      animation: pageIn .22s cubic-bezier(.25,.46,.45,.94);
+      position: relative; z-index: 1;
+    }
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: rgba(10,10,10,0.88);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-top: 1px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: space-around;
+      padding: 0 4px;
+      z-index: 100;
+    }
+    nav button {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: none; border: none; cursor: pointer;
+      color: var(--sub); font-size: 10px; font-weight: 500;
+      padding: 8px 10px; border-radius: var(--radius-sm);
+      transition: color .2s ease, background .2s ease;
+      font-family: inherit; letter-spacing: 0.3px;
+    }
+    nav button svg {
+      transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+    }
+    nav button:hover svg { transform: scale(1.15); }
+    nav button:hover { color: var(--accent); }
+    nav button.active { color: var(--accent); }
+    nav button.active svg { transform: scale(1.1); }
+
+    /* ── Page title ── */
+    .page-title {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+      margin-bottom: 24px; color: var(--text);
+    }
+    .page-sub {
+      font-size: 13px; color: var(--sub); margin-top: -18px; margin-bottom: 24px;
+    }
+
+    /* ── Cards (Glassmorphism) ── */
+    .card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: var(--radius); padding: 18px 20px; margin-bottom: 12px;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .card:hover {
+      border-color: rgba(255,255,255,0.1);
+    }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+
+    /* ── Inputs ── */
+    input[type="text"], input[type="number"] {
+      width: 100%; padding: 12px 14px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 14px;
+      font-family: inherit; outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      margin-bottom: 10px;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--accent);
+      background: var(--surface3);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    input[type="text"]::placeholder, input[type="number"]::placeholder { color: var(--sub); }
+
+    /* ── Buttons ── */
+    .btn {
+      border: none; cursor: pointer; font-family: inherit;
+      font-weight: 600; border-radius: var(--radius-sm);
+      transition: all .18s cubic-bezier(.25,.46,.45,.94);
+      font-size: 14px; padding: 11px 18px;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary {
+      background: var(--accent); color: #fff; width: 100%;
+      padding: 13px; font-size: 15px; border-radius: 12px;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .btn-primary:hover { filter: brightness(1.12); box-shadow: 0 6px 24px var(--accent-glow); }
+    .btn-ghost {
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid #2e1a1a; font-size: 12px; padding: 6px 12px; }
+    .btn-danger:hover { background: rgba(224,85,85,0.1); border-color: var(--danger); }
+    .btn-sm { font-size: 12px; padding: 7px 14px; }
+
+    /* ── Tag & Übung Rows ── */
+    .tag-row, .übung-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px;
+      transition: border-color .2s ease, background .2s ease;
+    }
+    .tag-row:hover, .übung-row:hover {
+      border-color: rgba(255,255,255,0.1);
+      background: var(--surface3);
+    }
+    .tag-row-name, .übung-row-name { font-size: 15px; font-weight: 500; }
+    .tag-row-actions, .übung-row-actions { display: flex; gap: 8px; align-items: center; }
+    .übung-row-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+    /* ── Training ── */
+    .übung-block {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 14px; padding: 16px 18px; margin-bottom: 12px;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .übung-block:hover {
+      border-color: rgba(79,142,247,0.2);
+      box-shadow: 0 0 0 1px rgba(79,142,247,0.08);
+    }
+    .übung-block h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--accent); }
+    .satz-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .satz-row label { font-size: 12px; color: var(--sub); width: 52px; flex-shrink: 0; }
+    .satz-row input { margin-bottom: 0; flex: 1; padding: 10px 12px; font-size: 14px; }
+    .satz-row input:not(:placeholder-shown) {
+      border-color: rgba(79,142,247,0.35);
+      background: rgba(79,142,247,0.05);
+    }
+
+    /* ── Timer ── */
+    #timer-anzeige {
+      font-size: 72px; font-weight: 700; letter-spacing: -3px;
+      text-align: center; color: var(--text); margin: 28px 0 8px;
+      font-variant-numeric: tabular-nums;
+      transition: color .3s ease;
+    }
+    #timer-signal {
+      text-align: center; font-size: 18px; font-weight: 600;
+      color: var(--accent); min-height: 28px; margin-bottom: 20px;
+      transition: opacity .3s ease;
+    }
+    .timer-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+    .timer-controls input { margin-bottom: 0; }
+    .toggle-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      transition: border-color .2s ease;
+    }
+    .toggle-row:hover { border-color: rgba(255,255,255,0.1); }
+    .toggle-row label { font-size: 14px; color: var(--sub); cursor: pointer; }
+    input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+    /* ── Historie ── */
+    .session-block {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 14px; padding: 16px 18px; margin-bottom: 12px;
+      transition: border-color .2s ease;
+    }
+    .session-block:hover { border-color: rgba(255,255,255,0.1); }
+    .session-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .session-datum { font-size: 13px; color: var(--sub); }
+    .session-tag { font-size: 15px; font-weight: 600; }
+    .session-übung { margin-bottom: 8px; }
+    .session-übung-name { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .session-satz { font-size: 12px; color: var(--sub); padding: 3px 0; }
+
+    /* ── Rekorde ── */
+    .rekord-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px;
+      transition: border-color .2s ease, background .2s ease;
+    }
+    .rekord-row:hover { border-color: rgba(79,142,247,0.3); background: var(--surface3); }
+    .rekord-name { font-size: 14px; font-weight: 500; }
+    .rekord-kg { font-size: 18px; font-weight: 700; color: var(--accent); }
+
+    /* ── Körpergewicht ── */
+    .kg-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border-bottom: 1px solid var(--border-soft);
+      transition: background .15s ease;
+    }
+    .kg-row:hover { background: var(--surface3); }
+    .kg-row:last-child { border-bottom: none; }
+    .kg-datum { font-size: 13px; color: var(--sub); }
+    .kg-wert { font-size: 16px; font-weight: 600; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center; padding: 48px 20px;
+      color: var(--sub); font-size: 14px; line-height: 1.7;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border-soft); margin: 20px 0; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30,30,30,0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      color: var(--text); padding: 10px 22px; border-radius: 30px;
+      font-size: 13px; font-weight: 500; z-index: 999;
+      animation: toastIn .22s cubic-bezier(.34,1.56,.64,1); white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    /* ── Gear Button ── */
+    #btn-einstellungen {
+      position: fixed; top: 16px; right: 16px;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      color: var(--sub); font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; transition: all .2s ease;
+    }
+    #btn-einstellungen:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+      transform: rotate(30deg);
+    }
+
+    /* ── Settings Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 300; display: flex; align-items: flex-end;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    .modal {
+      background: rgba(18,18,18,0.96);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px 24px 0 0; padding: 28px 24px 48px;
+      width: 100%; max-width: 520px; margin: 0 auto;
+      animation: slideUp .28s cubic-bezier(.25,.46,.45,.94);
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+    }
+    @keyframes slideUp { from { transform: translateY(60px); opacity:0 } to { transform: translateY(0); opacity:1 } }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+    .modal-close {
+      float: right; background: none; border: none; color: var(--sub);
+      font-size: 22px; cursor: pointer; margin-top: -4px;
+      transition: color .15s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    /* ── Startseite ── */
+    .start-greeting {
+      font-size: 13px; font-weight: 500; color: var(--sub);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .start-date {
+      font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
+      color: var(--text); margin-bottom: 32px; text-transform: capitalize;
+    }
+    .start-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: var(--radius); padding: 18px 20px; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: border-color .2s ease, transform .2s ease;
+    }
+    .start-card:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-1px); }
+    .start-card-label {
+      font-size: 11px; font-weight: 600; color: var(--sub);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
+    }
+    .start-card-value { font-size: 17px; font-weight: 600; color: var(--text); }
+    .start-card-sub { font-size: 12px; color: var(--sub); margin-top: 3px; }
+    .start-card-icon { font-size: 28px; opacity: 0.4; }
+    .start-btn {
+      width: 100%; margin-top: 24px; padding: 16px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 14px; font-size: 16px;
+      font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: filter .18s ease, box-shadow .18s ease, transform .18s ease;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .start-btn:hover { filter: brightness(1.12); box-shadow: 0 8px 28px var(--accent-glow); }
+    .start-btn:active { transform: scale(0.98); }
+
+    /* ── Auto-save indicator ── */
+    .autosave-banner {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; margin-bottom: 14px;
+      background: rgba(79,142,247,0.08);
+      border: 1px solid rgba(79,142,247,0.2);
+      border-radius: var(--radius-sm);
+      font-size: 12px; color: var(--accent);
+      animation: pageIn .3s ease;
+    }
+    .autosave-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* ── Stagger animations ── */
+    .stagger-item {
+      opacity: 0;
+      transform: translateY(14px);
+      animation: staggerIn .3s cubic-bezier(.25,.46,.45,.94) forwards;
+    }
+    @keyframes staggerIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Ripple ── */
+    .btn { position: relative; overflow: hidden; }
+    .ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      transform: scale(0);
+      animation: rippleAnim .5s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* ── Timer ring ── */
+    #timer-ring-wrap {
+      position: relative; width: 180px; height: 180px;
+      margin: 16px auto 0; display: flex; align-items: center; justify-content: center;
+    }
+    #timer-ring-svg {
+      position: absolute; top: 0; left: 0; transform: rotate(-90deg);
+    }
+    #timer-ring-track { fill: none; stroke: var(--surface3); stroke-width: 6; }
+    #timer-ring-progress { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round;
+      transition: stroke-dashoffset .9s linear; filter: drop-shadow(0 0 6px var(--accent-glow)); }
+    #timer-anzeige {
+      position: relative; font-size: 46px; font-weight: 700; letter-spacing: -2px;
+      text-align: center; color: var(--text); margin: 0;
+      font-variant-numeric: tabular-nums; transition: color .3s ease;
+    }
+
+    /* ── Rekord shine ── */
+    .rekord-new {
+      animation: shine .6s ease;
+    }
+    @keyframes shine {
+      0%   { box-shadow: 0 0 0 0 rgba(79,142,247,0.6); }
+      50%  { box-shadow: 0 0 0 8px rgba(79,142,247,0); }
+      100% { box-shadow: 0 0 0 0 rgba(79,142,247,0); }
+    }
+
+    /* ── Streak badge ── */
+    .streak-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, rgba(255,160,50,0.15), rgba(255,100,50,0.1));
+      border: 1px solid rgba(255,130,50,0.25);
+      border-radius: 20px; padding: 4px 12px; font-size: 13px;
+      font-weight: 600; color: #ff9040; margin-bottom: 20px;
+      animation: streakPop .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes streakPop {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .streak-flame { font-size: 16px; animation: flicker 1.5s ease-in-out infinite alternate; }
+    @keyframes flicker {
+      from { transform: scale(1) rotate(-3deg); }
+      to   { transform: scale(1.15) rotate(3deg); }
+    }
+
+    /* ── Settings gear SVG ── */
+    #btn-einstellungen svg {
+      transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    #btn-einstellungen:hover svg { transform: rotate(90deg); }
+
+    /* ── Background decorations ── */
+    .bg-deco {
+      position: fixed; inset: 0; pointer-events: none;
+      z-index: 0; overflow: hidden;
+    }
+    .bg-deco svg {
+      position: absolute; opacity: 0.028;
+      animation: floatDeco 18s ease-in-out infinite alternate;
+    }
+    .bg-deco svg:nth-child(2) { animation-duration: 24s; animation-delay: -6s; }
+    .bg-deco svg:nth-child(3) { animation-duration: 20s; animation-delay: -12s; }
+    .bg-deco svg:nth-child(4) { animation-duration: 28s; animation-delay: -4s; }
+    @keyframes floatDeco {
+      0%   { transform: translateY(0px) rotate(0deg) scale(1); }
+      50%  { transform: translateY(-18px) rotate(4deg) scale(1.04); }
+      100% { transform: translateY(6px) rotate(-3deg) scale(0.97); }
+    }
+    #app > #inhalt, #app > main { position: relative; z-index: 1; }
+    nav { z-index: 100; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+<div class="bg-deco" id="bg-deco"></div>
+<button id="btn-einstellungen">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+<div id="app">
+  <nav>
+    <button id="btn-plan">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+      Plan
+    </button>
+    <button id="btn-heute">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11"/><rect x="3" y="9" width="4" height="8" rx="2"/><rect x="17" y="9" width="4" height="8" rx="2"/><path d="M7 13h10"/></svg>
+      Training
+    </button>
+    <button id="btn-timer">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 3"/><path d="M9 2h6M12 2v3"/></svg>
+      Timer
+    </button>
+    <button id="btn-historie">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 1 0 .5-3"/><path d="M3 4v4h4"/></svg>
+      Historie
+    </button>
+    <button id="btn-rekorde">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4"/><path d="M18 9h2a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4"/><path d="M8 21h8M12 17v4"/><path d="M5 3h14l-1 6a6 6 0 0 1-12 0Z"/></svg>
+      Rekorde
+    </button>
+    <button id="btn-körpergewicht">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v4c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 9v4c0 1.66 4.03 3 9 3s9-1.34 9-3V9"/></svg>
+      Gewicht
+    </button>
+  </nav>
+  <main id="inhalt">
+    <div class="empty">
+      <div class="empty-icon">💪</div>
+      <p>Wähle einen Bereich<br>um zu beginnen.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ─── Daten laden & speichern ────────────────────────────────
+  let planJSON = localStorage.getItem("plan")
+  let plan = planJSON ? JSON.parse(planJSON) : {}
+
+  let sessionenJSON = localStorage.getItem("sessionen")
+  let sessionen = sessionenJSON ? JSON.parse(sessionenJSON) : []
+
+  let körpergewichtJSON = localStorage.getItem("körpergewicht")
+  let körpergewicht = körpergewichtJSON ? JSON.parse(körpergewichtJSON) : []
+
+  let reihenfolgeJSON = localStorage.getItem("reihenfolge")
+  let reihenfolge = reihenfolgeJSON ? JSON.parse(reihenfolgeJSON) : []
+
+  function planSpeichern() { localStorage.setItem("plan", JSON.stringify(plan)) }
+  function sessionenSpeichern() { localStorage.setItem("sessionen", JSON.stringify(sessionen)) }
+  function körpergewichtSpeichern() { localStorage.setItem("körpergewicht", JSON.stringify(körpergewicht)) }
+  function reihenfolgeSpeichern() {
+    localStorage.setItem("reihenfolge", JSON.stringify(reihenfolge))
+  }
+
+  // ─── Toast ──────────────────────────────────────────────────
+  let toastTimer
+  function flash(msg) {
+    document.querySelector('.toast')?.remove()
+    clearTimeout(toastTimer)
+    const el = document.createElement('div')
+    el.className = 'toast'
+    el.textContent = msg
+    document.body.appendChild(el)
+    toastTimer = setTimeout(() => el.remove(), 2000)
+  }
+
+  // ─── Active nav ─────────────────────────────────────────────
+  function setActiveNav(id) {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'))
+    document.getElementById(id).classList.add('active')
+  }
+
+  // ─── Plan Funktionen ────────────────────────────────────────
+  function tageLaden() {
+    const liste = document.getElementById("tage-liste")
+    if (!liste) return
+    liste.innerHTML = ""
+    if (Object.keys(plan).length === 0) {
+      liste.innerHTML = `<div class="empty"><p>Noch keine Trainingstage.<br>Füge deinen ersten Tag hinzu.</p></div>`
+      return
+    }
+    const tageReihenfolge = reihenfolge.length > 0 ? reihenfolge : Object.keys(plan)
+    tageReihenfolge.forEach(function(tagName) {
+      liste.innerHTML += `
+        <div class="tag-row">
+          <div>
+            <div class="tag-row-name">${tagName}</div>
+            <div class="übung-row-sub">${plan[tagName].length} Übungen</div>
+          </div>
+          <div class="tag-row-actions">
+            <button class="btn btn-ghost btn-sm" onclick="tagVerschieben('${tagName}', -1)">↑</button>
+            <button class="btn btn-ghost btn-sm" onclick="tagVerschieben('${tagName}', 1)">↓</button>
+            <button class="btn btn-ghost btn-sm" onclick="tagÖffnen('${tagName}')">Öffnen</button>
+            <button class="btn btn-danger btn-sm" onclick="tagLöschen('${tagName}')">✕</button>
+          </div>
+        </div>`
+    })
+  }
+
+  function tagÖffnen(tagName) {
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">${tagName}</p>
+      <div class="card">
+        <div class="card-title">Übung hinzufügen</div>
+        <input type="text" id="input-übung" placeholder="Übungsname">
+        <input type="number" id="input-sätze" placeholder="Anzahl Sätze">
+        <button class="btn btn-primary" id="btn-übung-hinzufügen">Hinzufügen</button>
+      </div>
+      <div class="divider"></div>
+      <div id="übungen-liste"></div>
+    `
+    übungenLaden(tagName)
+    document.getElementById("btn-übung-hinzufügen").addEventListener("click", function() {
+      const übungName = document.getElementById("input-übung").value
+      const satzAnzahl = document.getElementById("input-sätze").value
+      if (übungName.trim() !== "" && satzAnzahl !== "") {
+        plan[tagName].push({ name: übungName.trim(), sätze: satzAnzahl })
+        planSpeichern()
+        übungenLaden(tagName)
+        document.getElementById("input-übung").value = ""
+        document.getElementById("input-sätze").value = ""
+        flash("Übung hinzugefügt")
+      }
+    })
+  }
+
+  function übungenLaden(tagName) {
+    const liste = document.getElementById("übungen-liste")
+    if (!liste) return
+    liste.innerHTML = ""
+    if (plan[tagName].length === 0) {
+      liste.innerHTML = `<div class="empty"><p>Noch keine Übungen.</p></div>`
+      return
+    }
+    plan[tagName].forEach(function(übung, index) {
+      liste.innerHTML += `
+        <div class="übung-row">
+          <div>
+            <div class="übung-row-name">${übung.name}</div>
+            <div class="übung-row-sub">${übung.sätze} Sätze</div>
+          </div>
+          <div class="tag-row-actions">
+          <button class="btn btn-ghost btn-sm" onclick="übungUmbenennen('${tagName}', ${index})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="übungLöschen('${tagName}', ${index})">✕</button>
+          </div>
+        </div>`
+    })
+  }
+
+  function übungLöschen(tagName, index) {
+    plan[tagName].splice(index, 1)
+    planSpeichern()
+    übungenLaden(tagName)
+    flash("Übung gelöscht")
+  }
+
+  function tagLöschen(tagName) {
+    delete plan[tagName]
+    reihenfolge = reihenfolge.filter(t => t !== tagName)
+    reihenfolgeSpeichern()
+    planSpeichern()
+    tageLaden()
+    flash("Tag gelöscht")
+  }
+
+  // ─── Training ───────────────────────────────────────────────
+  const AUTOSAVE_KEY = "training_autosave"
+
+  function autosaveSchreiben(tagName) {
+    const daten = { tag: tagName, felder: {} }
+    plan[tagName].forEach(function(übung, index) {
+      for (let i = 1; i <= übung.sätze; i++) {
+        const wdhEl = document.getElementById(`wdh-${index}-${i}`)
+        const kgEl  = document.getElementById(`kg-${index}-${i}`)
+        if (wdhEl) daten.felder[`wdh-${index}-${i}`] = wdhEl.value
+        if (kgEl)  daten.felder[`kg-${index}-${i}`]  = kgEl.value
+      }
+    })
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(daten))
+  }
+
+  function autosaveWiederherstellen(tagName) {
+    const raw = localStorage.getItem(AUTOSAVE_KEY)
+    if (!raw) return false
+    try {
+      const daten = JSON.parse(raw)
+      if (daten.tag !== tagName) return false
+      let wiederhergestellt = false
+      Object.keys(daten.felder).forEach(function(id) {
+        const el = document.getElementById(id)
+        if (el && daten.felder[id] !== "") {
+          el.value = daten.felder[id]
+          wiederhergestellt = true
+        }
+      })
+      return wiederhergestellt
+    } catch { return false }
+  }
+
+  function autosaveLöschen() {
+    localStorage.removeItem(AUTOSAVE_KEY)
+  }
+
+  function trainingStarten(tagName) {
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">${tagName}</p>
+      <div id="autosave-banner-container"></div>
+      <div id="übungen-training"></div>
+      <button class="btn btn-primary" id="btn-training-speichern">Training speichern</button>
+    `
+
+    // Letzte Session für diesen Tag finden
+    const letzteSession = [...sessionen].reverse().find(s => s.tag === tagName)
+
+    plan[tagName].forEach(function(übung, index) {
+      let letzteÜbung = null
+      if (letzteSession) {
+        letzteÜbung = letzteSession.übungen.find(u => u.name === übung.name)
+      }
+
+      let sätzeHTML = ""
+      for (let i = 1; i <= übung.sätze; i++) {
+        const letzterSatz = letzteÜbung?.sätze?.[i - 1]
+        const wdhPlaceholder = letzterSatz?.wdh ? letzterSatz.wdh : "Wdh"
+        const kgPlaceholder  = letzterSatz?.kg  ? letzterSatz.kg  : "kg"
+        sätzeHTML += `
+          <div class="satz-row">
+            <label>Satz ${i}</label>
+            <input type="number" placeholder="${wdhPlaceholder}" id="wdh-${index}-${i}">
+            <input type="number" placeholder="${kgPlaceholder}"  id="kg-${index}-${i}">
+          </div>`
+      }
+      document.getElementById("übungen-training").innerHTML += `
+        <div class="übung-block">
+          <h3>${übung.name}</h3>
+          ${sätzeHTML}
+        </div>`
+    })
+
+    // Autosave wiederherstellen
+    const hatDaten = autosaveWiederherstellen(tagName)
+    if (hatDaten) {
+      document.getElementById("autosave-banner-container").innerHTML = `
+        <div class="autosave-banner">
+          <div class="autosave-dot"></div>
+          Nicht gespeicherte Eingaben wiederhergestellt
+        </div>`
+    }
+
+    // Input-Event-Listener für Autosave auf alle Felder
+    document.getElementById("übungen-training").addEventListener("input", function() {
+      autosaveSchreiben(tagName)
+    })
+
+    document.getElementById("btn-training-speichern").addEventListener("click", function() {
+      const session = {
+        datum: new Date().toLocaleDateString("de"),
+        tag: tagName,
+        übungen: []
+      }
+      plan[tagName].forEach(function(übung, index) {
+        const sätzeErgebnisse = []
+        for (let i = 1; i <= übung.sätze; i++) {
+          sätzeErgebnisse.push({
+            wdh: document.getElementById(`wdh-${index}-${i}`).value,
+            kg:  document.getElementById(`kg-${index}-${i}`).value
+          })
+        }
+        session.übungen.push({ name: übung.name, sätze: sätzeErgebnisse })
+      })
+      sessionen.push(session)
+      sessionenSpeichern()
+      autosaveLöschen()
+      flash("Training gespeichert ✓")
+      btnHeute.click()
+    })
+  }
+
+  // ─── Session löschen ────────────────────────────────────────
+  function sessionLöschen(index) {
+    sessionen.splice(index, 1)
+    sessionenSpeichern()
+    flash("Session gelöscht")
+    btnHistorie.click()
+  }
+
+  // ─── Körpergewicht ──────────────────────────────────────────
+  function kgDiagramm() {
+    const canvas = document.getElementById("kg-chart")
+    if (!canvas || körpergewicht.length < 2) {
+      if (canvas) canvas.style.display = "none"
+      return
+    }
+    canvas.style.display = "block"
+    const ctx = canvas.getContext("2d")
+    const W = canvas.width  = canvas.offsetWidth
+    const H = canvas.height = 180
+    ctx.clearRect(0, 0, W, H)
+
+    const werte = körpergewicht.map(e => parseFloat(e.kg))
+    const min = Math.min(...werte) - 2
+    const max = Math.max(...werte) + 2
+    const pad = { top: 16, right: 16, bottom: 32, left: 40 }
+    const w = W - pad.left - pad.right
+    const h = H - pad.top  - pad.bottom
+
+    const toX = i => pad.left + (i / (werte.length - 1)) * w
+    const toY = v => pad.top + h - ((v - min) / (max - min)) * h
+
+    ctx.strokeStyle = "#2a2a2a"
+    ctx.lineWidth = 1
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (h / 4) * i
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + w, y); ctx.stroke()
+      const val = max - ((max - min) / 4) * i
+      ctx.fillStyle = "#555"
+      ctx.font = "11px Inter, sans-serif"
+      ctx.textAlign = "right"
+      ctx.fillText(val.toFixed(1), pad.left - 6, y + 4)
+    }
+
+    ctx.fillStyle = "#555"
+    ctx.font = "10px Inter, sans-serif"
+    ctx.textAlign = "center"
+    ctx.fillText(körpergewicht[0].datum, toX(0), H - 6)
+    ctx.fillText(körpergewicht[körpergewicht.length-1].datum, toX(werte.length-1), H - 6)
+
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + h)
+    grad.addColorStop(0, "rgba(79,142,247,0.25)")
+    grad.addColorStop(1, "rgba(79,142,247,0)")
+    ctx.beginPath()
+    ctx.moveTo(toX(0), toY(werte[0]))
+    werte.forEach((v, i) => { if (i > 0) ctx.lineTo(toX(i), toY(v)) })
+    ctx.lineTo(toX(werte.length-1), pad.top + h)
+    ctx.lineTo(toX(0), pad.top + h)
+    ctx.closePath()
+    ctx.fillStyle = grad
+    ctx.fill()
+
+    ctx.beginPath()
+    ctx.strokeStyle = "#4f8ef7"
+    ctx.lineWidth = 2
+    ctx.lineJoin = "round"
+    werte.forEach((v, i) => { i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)) })
+    ctx.stroke()
+
+    werte.forEach((v, i) => {
+      ctx.beginPath()
+      ctx.arc(toX(i), toY(v), 4, 0, Math.PI * 2)
+      ctx.fillStyle = "#4f8ef7"
+      ctx.fill()
+      ctx.strokeStyle = "#0e0e0e"
+      ctx.lineWidth = 2
+      ctx.stroke()
+    })
+  }
+
+  function kgLaden() {
+    const liste = document.getElementById("kg-liste")
+    if (!liste) return
+    liste.innerHTML = ""
+    if (körpergewicht.length === 0) {
+      liste.innerHTML = `<div class="empty"><p>Noch keine Einträge.</p></div>`
+      return
+    }
+    const reversed = [...körpergewicht].reverse()
+    reversed.forEach(function(eintrag, index) {
+      const echterIndex = körpergewicht.length - 1 - index
+      liste.innerHTML += `
+        <div class="kg-row">
+          <span class="kg-datum">${eintrag.datum}</span>
+          <span class="kg-wert">${eintrag.kg} kg</span>
+          <button class="btn btn-danger btn-sm" onclick="kgLöschen(${echterIndex})">x</button>
+        </div>`
+    })
+    setTimeout(kgDiagramm, 0)
+  }
+
+  // ─── Startseite ─────────────────────────────────────────────
+  function startseiteLaden() {
+    const datum = new Date().toLocaleDateString("de", { weekday: "long", day: "numeric", month: "long" })
+    const stunde = new Date().getHours()
+    const gruss = stunde < 12 ? "Guten Morgen" : stunde < 18 ? "Guten Tag" : "Guten Abend"
+
+    const letzteSession  = sessionen[sessionen.length - 1]
+    const letztesGewicht = körpergewicht[körpergewicht.length - 1]
+
+    const trainingsHTML = letzteSession
+      ? `<div class="start-card-label">Letztes Training</div>
+         <div class="start-card-value">${letzteSession.tag}</div>
+         <div class="start-card-sub">${letzteSession.datum}</div>`
+      : `<div class="start-card-label">Letztes Training</div>
+         <div class="start-card-value" style="color:var(--sub);font-size:14px">Noch kein Training</div>`
+
+    const gewichtHTML = letztesGewicht
+      ? `<div class="start-card-label">Körpergewicht</div>
+         <div class="start-card-value">${letztesGewicht.kg} kg</div>
+         <div class="start-card-sub">${letztesGewicht.datum}</div>`
+      : `<div class="start-card-label">Körpergewicht</div>
+         <div class="start-card-value" style="color:var(--sub);font-size:14px">Noch kein Eintrag</div>`
+
+    document.getElementById("inhalt").innerHTML = `
+      <p class="start-greeting">${gruss}</p>
+      <p class="start-date">${datum}</p>
+      <div class="start-card">
+        <div>${trainingsHTML}</div>
+        <div class="start-card-icon">💪</div>
+      </div>
+      <div class="start-card">
+        <div>${gewichtHTML}</div>
+        <div class="start-card-icon">⚖️</div>
+      </div>
+      <button class="start-btn" onclick="btnHeute.click()">Training starten</button>
+    `
+  }
+  function kgLöschen(index) {
+    körpergewicht.splice(index, 1)
+    körpergewichtSpeichern()
+    kgLaden()
+  }
+  function übungUmbenennen(tagName, index) {
+    const neuerName = prompt("Neuer Name für die Übung:", plan[tagName][index].name)
+    if (neuerName && neuerName.trim() !== "") {
+      plan[tagName][index].name =neuerName.trim()
+      planSpeichern()
+      übungenLaden(tagName)
+      flash("Übung umbenannt")
+    }
+  }
+  function tagVerschieben(tagName, richtung) {
+    const index = reihenfolge.indexOf(tagName)
+    const neuerIndex = index + richtung
+    if (neuerIndex < 0 || neuerIndex >= reihenfolge.length) return
+    const temp = reihenfolge[index]
+    reihenfolge[index] = reihenfolge[neuerIndex]
+    reihenfolge[neuerIndex] = temp
+    reihenfolgeSpeichern()
+    tageLaden()
+  }
+  // ─── Navigation ─────────────────────────────────────────────
+  const btnPlan          = document.getElementById("btn-plan")
+  const btnHeute         = document.getElementById("btn-heute")
+  const btnTimer         = document.getElementById("btn-timer")
+  const btnHistorie      = document.getElementById("btn-historie")
+  const btnRekorde       = document.getElementById("btn-rekorde")
+  const btnKörpergewicht = document.getElementById("btn-körpergewicht")
+
+  btnPlan.addEventListener("click", function() {
+    setActiveNav("btn-plan")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Trainingsplan</p>
+      <div class="card">
+        <div class="card-title">Neuer Tag</div>
+        <input type="text" id="input-tag" placeholder="z.B. Push, Pull, Legs">
+        <button class="btn btn-primary" id="btn-tag-hinzufügen">Tag erstellen</button>
+      </div>
+      <div class="divider"></div>
+      <div id="tage-liste"></div>
+    `
+    tageLaden()
+    document.getElementById("btn-tag-hinzufügen").addEventListener("click", function() {
+      const tagName = document.getElementById("input-tag").value.trim()
+      if (tagName !== "") {
+        plan[tagName] = []
+        planSpeichern()
+        reihenfolge.push(tagName)
+        reihenfolgeSpeichern()
+        tageLaden()
+        document.getElementById("input-tag").value = ""
+        flash("Tag erstellt")
+      }
+    })
+  })
+
+  btnHeute.addEventListener("click", function() {
+    setActiveNav("btn-heute")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Training</p>
+      <p class="page-sub">Wähle deinen heutigen Tag</p>
+      <div id="tage-liste"></div>
+    `
+    const liste = document.getElementById("tage-liste")
+    if (Object.keys(plan).length === 0) {
+      liste.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><p>Lege zuerst einen Trainingsplan an.</p></div>`
+      return
+    }
+    Object.keys(plan).forEach(function(tagName) {
+      liste.innerHTML += `
+        <div class="tag-row" style="cursor:pointer" onclick="trainingStarten('${tagName}')">
+          <div>
+            <div class="tag-row-name">${tagName}</div>
+            <div class="übung-row-sub">${plan[tagName].length} Übungen</div>
+          </div>
+          <span style="color:var(--sub);font-size:20px">›</span>
+        </div>`
+    })
+  })
+
+  btnTimer.addEventListener("click", function() {
+    setActiveNav("btn-timer")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Pausentimer</p>
+      <div id="timer-signal"></div>
+      <div id="timer-anzeige">00:00</div>
+      <div class="timer-controls">
+        <input type="number" id="input-min" placeholder="Min" min="0" style="margin-bottom:0">
+        <input type="number" id="input-sek" placeholder="Sek" min="0" max="59" style="margin-bottom:0">
+        <button class="btn btn-primary" id="btn-timer-start" style="width:auto;padding:12px 22px">Start</button>
+      </div>
+      <div class="toggle-row">
+        <input type="checkbox" id="toggle-ton">
+        <label for="toggle-ton">Ton bei Ende</label>
+      </div>
+    `
+    let sekunden = 0
+    let interval = null
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60)
+      const sec = s % 60
+      return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    }
+
+    document.getElementById("btn-timer-start").addEventListener("click", function() {
+      const min = parseInt(document.getElementById("input-min").value) || 0
+      const sek = parseInt(document.getElementById("input-sek").value) || 0
+      sekunden = min * 60 + sek
+      if (sekunden > 0) {
+        document.getElementById("timer-signal").textContent = ""
+        document.getElementById("timer-anzeige").textContent = formatTime(sekunden)
+        clearInterval(interval)
+        interval = setInterval(function() {
+          sekunden--
+          document.getElementById("timer-anzeige").textContent = formatTime(sekunden)
+          if (sekunden <= 0) {
+            clearInterval(interval)
+            document.getElementById("timer-signal").textContent = "Nächster Satz!"
+            if (document.getElementById("toggle-ton").checked) {
+              const audioCtx = new AudioContext()
+              const osc = audioCtx.createOscillator()
+              osc.connect(audioCtx.destination)
+              osc.start()
+              osc.stop(audioCtx.currentTime + 0.3)
+            }
+          }
+        }, 1000)
+      }
+    })
+  })
+
+  btnHistorie.addEventListener("click", function() {
+    setActiveNav("btn-historie")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Historie</p>
+      <div id="historie-liste"></div>
+    `
+    const liste = document.getElementById("historie-liste")
+    if (sessionen.length === 0) {
+      liste.innerHTML = `<div class="empty"><div class="empty-icon">📖</div><p>Noch keine Sessions gespeichert.</p></div>`
+      return
+    }
+    const reversed = [...sessionen].reverse().map((s, i) => ({ session: s, origIndex: sessionen.length - 1 - i }))
+    reversed.forEach(function({ session, origIndex }) {
+      let übungenHTML = ""
+      session.übungen.forEach(function(übung) {
+        let sätzeHTML = ""
+        übung.sätze.forEach(function(satz, i) {
+          sätzeHTML += `<div class="session-satz">Satz ${i+1}: ${satz.wdh} Wdh · ${satz.kg} kg</div>`
+        })
+        übungenHTML += `
+          <div class="session-übung">
+            <div class="session-übung-name">${übung.name}</div>
+            ${sätzeHTML}
+          </div>`
+      })
+      liste.innerHTML += `
+        <div class="session-block">
+          <div class="session-header">
+            <div>
+              <div class="session-tag">${session.tag}</div>
+              <div class="session-datum">${session.datum}</div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="sessionLöschen(${origIndex})">✕</button>
+          </div>
+          ${übungenHTML}
+        </div>`
+    })
+  })
+
+  btnRekorde.addEventListener("click", function() {
+    setActiveNav("btn-rekorde")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Rekorde</p>
+      <div id="rekorde-liste"></div>
+    `
+    const liste = document.getElementById("rekorde-liste")
+    const rekorde = {}
+    sessionen.forEach(function(session) {
+      session.übungen.forEach(function(übung) {
+        übung.sätze.forEach(function(satz) {
+          const kg = parseFloat(satz.kg)
+          if (!isNaN(kg) && (!rekorde[übung.name] || kg > rekorde[übung.name])) {
+            rekorde[übung.name] = kg
+          }
+        })
+      })
+    })
+    if (Object.keys(rekorde).length === 0) {
+      liste.innerHTML = `<div class="empty"><div class="empty-icon">🏆</div><p>Noch keine Rekorde.<br>Logge dein erstes Training.</p></div>`
+      return
+    }
+    Object.keys(rekorde).forEach(function(name) {
+      liste.innerHTML += `
+        <div class="rekord-row">
+          <span class="rekord-name">${name}</span>
+          <span class="rekord-kg">${rekorde[name]} kg</span>
+        </div>`
+    })
+  })
+
+  btnKörpergewicht.addEventListener("click", function() {
+    setActiveNav("btn-körpergewicht")
+    document.getElementById("inhalt").innerHTML = `
+      <p class="page-title">Körpergewicht</p>
+      <div class="card">
+        <div class="card-title">Eintragen</div>
+        <input type="number" id="input-kg" placeholder="kg">
+        <button class="btn btn-primary" id="btn-kg-eintragen">Speichern</button>
+      </div>
+      <div class="card" style="padding:16px 18px">
+        <canvas id="kg-chart" style="width:100%;display:none"></canvas>
+      </div>
+      <div class="divider"></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="kg-liste"></div>
+      </div>
+    `
+    kgLaden()
+    document.getElementById("btn-kg-eintragen").addEventListener("click", function() {
+      const kgWert = document.getElementById("input-kg").value
+      if (kgWert !== "") {
+        körpergewicht.push({ datum: new Date().toLocaleDateString("de"), kg: kgWert })
+        körpergewichtSpeichern()
+        kgLaden()
+        document.getElementById("input-kg").value = ""
+        flash("Gewicht gespeichert")
+      }
+    })
+  })
+
+  // ─── Einstellungen ──────────────────────────────────────────
+  document.getElementById("btn-einstellungen").addEventListener("click", function() {
+    const overlay = document.createElement("div")
+    overlay.className = "modal-overlay"
+    overlay.id = "settings-modal"
+    overlay.innerHTML = `
+      <div class="modal">
+        <button class="modal-close" id="modal-close">✕</button>
+        <p class="modal-title">Einstellungen</p>
+
+        <p style="font-size:13px;color:var(--sub);margin-bottom:16px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase">Daten sichern</p>
+
+        <button class="btn btn-ghost" id="btn-export" style="width:100%;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+          <span>Daten exportieren</span><span style="font-size:12px;opacity:0.5">.json ↓</span>
+        </button>
+        <label class="btn btn-ghost" style="width:100%;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+          <span>Daten importieren</span><span style="font-size:12px;opacity:0.5">.json ↑</span>
+          <input type="file" accept=".json" id="file-import" style="display:none">
+        </label>
+
+        <p style="font-size:12px;color:var(--sub);line-height:1.7">
+          Export speichert Plan, Training, Rekorde und Körpergewicht als .json Datei.<br>
+          Beim Import werden bestehende Daten überschrieben.
+        </p>
+      </div>
+    `
+    document.body.appendChild(overlay)
+
+    document.getElementById("modal-close").addEventListener("click", () => overlay.remove())
+    overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove() })
+
+    document.getElementById("btn-export").addEventListener("click", function() {
+      const data = JSON.stringify({
+        version: 1,
+        plan,
+        sessionen,
+        körpergewicht
+      }, null, 2)
+      const blob = new Blob([data], { type: "application/json" })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement("a")
+      a.href = url
+      a.download = `gymtracker_${new Date().toLocaleDateString("de").replace(/\./g, "-")}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      flash("Exportiert ✓")
+      overlay.remove()
+    })
+
+    document.getElementById("file-import").addEventListener("change", function(e) {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result)
+          if (parsed.plan)          { Object.assign(plan, parsed.plan); planSpeichern() }
+          if (parsed.sessionen)     { sessionen.length = 0; sessionen.push(...parsed.sessionen); sessionenSpeichern() }
+          if (parsed.körpergewicht) { körpergewicht.length = 0; körpergewicht.push(...parsed.körpergewicht); körpergewichtSpeichern() }
+          flash("Import erfolgreich ✓")
+          overlay.remove()
+        } catch { flash("Fehler beim Importieren") }
+      }
+      reader.readAsText(file)
+    })
+  })
+  // ─── Background decorations ─────────────────────────────────
+  const DECOS = {
+    start: `
+      <svg width="340" height="340" viewBox="0 0 100 100" style="top:-60px;right:-80px">
+        <path d="M50 10 L55 35 L80 35 L60 50 L68 75 L50 60 L32 75 L40 50 L20 35 L45 35 Z" fill="none" stroke="#4f8ef7" stroke-width="2.5"/>
+      </svg>
+      <svg width="200" height="200" viewBox="0 0 100 100" style="bottom:100px;left:-40px">
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <circle cx="50" cy="50" r="24" fill="none" stroke="#4f8ef7" stroke-width="1.2"/>
+        <circle cx="50" cy="50" r="10" fill="none" stroke="#4f8ef7" stroke-width="1"/>
+      </svg>
+      <svg width="160" height="160" viewBox="0 0 100 100" style="bottom:200px;right:-20px">
+        <path d="M20 80 Q50 10 80 80" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <path d="M30 80 Q50 25 70 80" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+      </svg>`,
+    plan: `
+      <svg width="300" height="300" viewBox="0 0 100 100" style="top:-40px;right:-60px">
+        <rect x="15" y="10" width="70" height="80" rx="8" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <line x1="28" y1="30" x2="72" y2="30" stroke="#4f8ef7" stroke-width="2"/>
+        <line x1="28" y1="45" x2="72" y2="45" stroke="#4f8ef7" stroke-width="1.5"/>
+        <line x1="28" y1="60" x2="55" y2="60" stroke="#4f8ef7" stroke-width="1.5"/>
+        <circle cx="24" cy="30" r="3" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+        <circle cx="24" cy="45" r="3" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+        <circle cx="24" cy="60" r="3" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+      </svg>
+      <svg width="180" height="180" viewBox="0 0 100 100" style="bottom:120px;left:-30px">
+        <polygon points="50,10 90,80 10,80" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <polygon points="50,28 74,72 26,72" fill="none" stroke="#4f8ef7" stroke-width="1.2"/>
+      </svg>`,
+    heute: `
+      <svg width="360" height="360" viewBox="0 0 100 100" style="top:-80px;right:-80px;opacity:0.03">
+        <ellipse cx="35" cy="50" rx="10" ry="28" fill="none" stroke="#4f8ef7" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="65" cy="50" rx="10" ry="28" fill="none" stroke="#4f8ef7" stroke-width="3" stroke-linecap="round"/>
+        <line x1="45" y1="50" x2="55" y2="50" stroke="#4f8ef7" stroke-width="3" stroke-linecap="round"/>
+        <line x1="25" y1="38" x2="75" y2="38" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <line x1="25" y1="62" x2="75" y2="62" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <svg width="140" height="140" viewBox="0 0 100 100" style="bottom:160px;left:-20px">
+        <path d="M50 15 C30 15 15 30 15 50 C15 70 30 85 50 85 C70 85 85 70 85 50 C85 30 70 15 50 15Z" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <path d="M50 30 L50 50 L65 58" fill="none" stroke="#4f8ef7" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <svg width="100" height="100" viewBox="0 0 100 100" style="bottom:280px;right:10px">
+        <path d="M30 70 L50 30 L70 70 Z" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <line x1="38" y1="56" x2="62" y2="56" stroke="#4f8ef7" stroke-width="1.5"/>
+      </svg>`,
+    timer: `
+      <svg width="360" height="360" viewBox="0 0 100 100" style="top:-60px;right:-80px">
+        <circle cx="50" cy="54" r="34" fill="none" stroke="#4f8ef7" stroke-width="2.2"/>
+        <circle cx="50" cy="54" r="26" fill="none" stroke="#4f8ef7" stroke-width="1"/>
+        <line x1="50" y1="20" x2="50" y2="28" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <line x1="82" y1="54" x2="74" y2="54" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <line x1="50" y1="88" x2="50" y2="80" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <line x1="18" y1="54" x2="26" y2="54" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <line x1="50" y1="54" x2="50" y2="36" stroke="#4f8ef7" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="50" y1="54" x2="63" y2="47" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <line x1="42" y1="14" x2="58" y2="14" stroke="#4f8ef7" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <svg width="160" height="160" viewBox="0 0 100 100" style="bottom:140px;left:-30px">
+        <path d="M25 75 Q35 40 50 50 Q65 60 75 25" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <circle cx="25" cy="75" r="4" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+        <circle cx="75" cy="25" r="4" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+      </svg>`,
+    historie: `
+      <svg width="300" height="300" viewBox="0 0 100 100" style="top:-50px;right:-60px">
+        <rect x="18" y="15" width="64" height="70" rx="6" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <line x1="28" y1="35" x2="72" y2="35" stroke="#4f8ef7" stroke-width="1.5"/>
+        <line x1="28" y1="47" x2="60" y2="47" stroke="#4f8ef7" stroke-width="1.5"/>
+        <line x1="28" y1="59" x2="65" y2="59" stroke="#4f8ef7" stroke-width="1.5"/>
+        <line x1="28" y1="71" x2="50" y2="71" stroke="#4f8ef7" stroke-width="1.5"/>
+        <circle cx="24" cy="35" r="2.5" fill="#4f8ef7"/>
+        <circle cx="24" cy="47" r="2.5" fill="#4f8ef7"/>
+        <circle cx="24" cy="59" r="2.5" fill="#4f8ef7"/>
+        <circle cx="24" cy="71" r="2.5" fill="#4f8ef7"/>
+      </svg>
+      <svg width="180" height="180" viewBox="0 0 100 100" style="bottom:130px;left:-30px">
+        <path d="M10 70 L25 45 L40 55 L55 30 L70 40 L85 20" fill="none" stroke="#4f8ef7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="10" y1="75" x2="85" y2="75" stroke="#4f8ef7" stroke-width="1" stroke-dasharray="3 3"/>
+      </svg>`,
+    rekorde: `
+      <svg width="320" height="320" viewBox="0 0 100 100" style="top:-60px;right:-70px">
+        <path d="M50 12 L56 34 L80 34 L62 49 L68 71 L50 57 L32 71 L38 49 L20 34 L44 34 Z" fill="none" stroke="#4f8ef7" stroke-width="2.2"/>
+        <path d="M50 26 L53.5 37.5 L66 37.5 L56 44.5 L59.5 56 L50 49.5 L40.5 56 L44 44.5 L34 37.5 L46.5 37.5 Z" fill="none" stroke="#4f8ef7" stroke-width="1.2"/>
+      </svg>
+      <svg width="160" height="160" viewBox="0 0 100 100" style="bottom:140px;left:-25px">
+        <rect x="10" y="60" width="20" height="32" rx="3" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <rect x="40" y="40" width="20" height="52" rx="3" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <rect x="70" y="22" width="20" height="70" rx="3" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+      </svg>`,
+    gewicht: `
+      <svg width="320" height="320" viewBox="0 0 100 100" style="top:-60px;right:-70px">
+        <ellipse cx="50" cy="38" rx="36" ry="14" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <line x1="14" y1="38" x2="14" y2="62" stroke="#4f8ef7" stroke-width="2"/>
+        <line x1="86" y1="38" x2="86" y2="62" stroke="#4f8ef7" stroke-width="2"/>
+        <ellipse cx="50" cy="62" rx="36" ry="14" fill="none" stroke="#4f8ef7" stroke-width="2"/>
+        <line x1="50" y1="10" x2="50" y2="24" stroke="#4f8ef7" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="30" y1="14" x2="50" y2="24" stroke="#4f8ef7" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="70" y1="14" x2="50" y2="24" stroke="#4f8ef7" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <svg width="180" height="180" viewBox="0 0 100 100" style="bottom:140px;left:-30px">
+        <path d="M15 75 Q30 30 50 50 Q70 70 85 20" fill="none" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="15" cy="75" r="3.5" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="3.5" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+        <circle cx="85" cy="20" r="3.5" fill="none" stroke="#4f8ef7" stroke-width="1.5"/>
+      </svg>`
+  }
+
+  function setBgDeco(key) {
+    const el = document.getElementById("bg-deco")
+    if (el) el.innerHTML = DECOS[key] || DECOS.start
+  }
+
+  // Wrap nav listeners to also set deco
+  const origBtnPlan          = btnPlan.onclick
+  const origBtnHeute         = btnHeute.onclick
+  const origBtnTimer         = btnTimer.onclick
+  const origBtnHistorie      = btnHistorie.onclick
+  const origBtnRekorde       = btnRekorde.onclick
+  const origBtnKörpergewicht = btnKörpergewicht.onclick
+
+  btnPlan.addEventListener("click",          () => setBgDeco("plan"))
+  btnHeute.addEventListener("click",         () => setBgDeco("heute"))
+  btnTimer.addEventListener("click",         () => setBgDeco("timer"))
+  btnHistorie.addEventListener("click",      () => setBgDeco("historie"))
+  btnRekorde.addEventListener("click",       () => setBgDeco("rekorde"))
+  btnKörpergewicht.addEventListener("click", () => setBgDeco("gewicht"))
+
+  startseiteLaden()
+  setBgDeco("start")
+</script>
+</body>
+</html>
